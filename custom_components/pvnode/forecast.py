@@ -3,6 +3,9 @@
 Timestamps arrive as RFC 3339 UTC (`?timezone=utc`) and are kept as aware datetimes
 throughout — no local-time arithmetic anywhere. Only `daily[].date` is a site-local
 calendar date, which is why the site's timezone is needed to resolve "today".
+
+Each row's `timestamp` marks the end of the 15-minute period it describes; every value
+in that row is the mean over `(timestamp - 15min, timestamp]`.
 """
 
 from __future__ import annotations
@@ -155,11 +158,11 @@ def parse_forecast(
 def value_at(
     series: dict[datetime, dict[str, Any]], key: str, when: datetime
 ) -> float | None:
-    """Value of `key` in the slot covering `when` (the latest slot at or before it)."""
-    candidates = [ts for ts in series if ts <= when]
+    """Value of `key` in the slot covering `when` (the earliest slot ending at or after it)."""
+    candidates = [ts for ts in series if ts >= when]
     if not candidates:
         return None
-    return _number(series[max(candidates)].get(key))
+    return _number(series[min(candidates)].get(key))
 
 
 def value_now(series: dict[datetime, dict[str, Any]], key: str) -> float | None:
@@ -173,11 +176,11 @@ def energy_between(
     end: datetime,
     key: str = "pv_power",
 ) -> float | None:
-    """Wh accumulated over [start, end) — power in W across a 15-minute grid."""
+    """Wh accumulated over (start, end] — power in W across a 15-minute grid."""
     total = 0.0
     found = False
     for ts, row in series.items():
-        if start <= ts < end and (power := _number(row.get(key))) is not None:
+        if start < ts <= end and (power := _number(row.get(key))) is not None:
             total += power * SLOT_HOURS
             found = True
     return total if found else None
@@ -189,10 +192,10 @@ def peak(
     end: datetime,
     key: str = "pv_power",
 ) -> tuple[datetime, float] | None:
-    """Highest value of `key` in [start, end) and when it occurs."""
+    """Highest value of `key` in (start, end] and when it occurs."""
     best: tuple[datetime, float] | None = None
     for ts, row in series.items():
-        if not start <= ts < end:
+        if not start < ts <= end:
             continue
         if (value := _number(row.get(key))) is None:
             continue

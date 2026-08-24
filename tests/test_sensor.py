@@ -73,17 +73,17 @@ async def test_one_day_sensor_per_returned_day(
 async def test_current_power_uses_the_slot_covering_now(
     hass: HomeAssistant, mock_api, config_entry
 ) -> None:
-    """The value is the last slot at or before now, not the nearest one."""
+    """The value is the earliest slot ending at or after now, not the nearest one."""
     payload = load_forecast()
     await setup_integration(hass, config_entry)
 
     now = dt_util.utcnow()
-    past = [
+    upcoming = [
         row
         for row in payload["values"]
-        if datetime.fromisoformat(row["timestamp"].replace("Z", "+00:00")) <= now
+        if datetime.fromisoformat(row["timestamp"].replace("Z", "+00:00")) >= now
     ]
-    expected = max(past, key=lambda row: row["timestamp"])["pv_power"]
+    expected = min(upcoming, key=lambda row: row["timestamp"])["pv_power"]
 
     state = _state(hass, config_entry.entry_id, "power_now")
     assert float(state.state) == expected
@@ -102,8 +102,8 @@ async def test_peak_is_the_maximum_of_the_local_day(
         row
         for row in payload["values"]
         if start
-        <= datetime.fromisoformat(row["timestamp"].replace("Z", "+00:00"))
-        < end
+        < datetime.fromisoformat(row["timestamp"].replace("Z", "+00:00"))
+        <= end
     ]
     peak = max(today, key=lambda row: row["pv_power"] or 0)
 

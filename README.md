@@ -45,10 +45,10 @@ Each site becomes a device, each roof surface its own sub-device.
 
 | Sensor | Unit | Meaning |
 |---|---|---|
-| Power forecast now | W | forecast for the current 15-minute slot |
+| Power forecast now | W | mean power over the 15-minute period just completed |
 | Power forecast in 30 minutes / 1 hour | W | for short-term automations |
 | Peak power today / tomorrow | W | daily maximum |
-| Time of peak power today / tomorrow | time | when the maximum occurs |
+| Time of peak power today / tomorrow | time | end of the 15-minute period in which the maximum occurs |
 | Clearsky power now | W | reference without clouds |
 | Energy forecast today / tomorrow / in N days | kWh | daily total, straight from pvnode |
 | Clearsky energy today | kWh | daily total without clouds |
@@ -97,7 +97,8 @@ one from back then.
 Home Assistant ships no built-in card for forecast curves. The usual route is the
 [ApexCharts card](https://github.com/RomRider/apexcharts-card) from HACS.
 
-Every power sensor carries its full time series in the `forecast` attribute:
+Every power sensor carries its full time series in the `forecast` attribute. Each
+`datetime` is the end of the 15-minute period the paired value is the mean over:
 
 ```yaml
 forecast:

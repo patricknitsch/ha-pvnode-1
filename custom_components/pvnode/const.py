@@ -47,7 +47,7 @@ STORAGE_VERSION: Final = 1
 
 ISSUE_QUOTA_EXHAUSTED: Final = "quota_exhausted"
 
-# Forecasts are computed on a 15-minute grid
+# Forecasts are computed on a 15-minute grid; each timestamp marks the end of its slot
 SLOT_MINUTES: Final = 15
 SLOT_HOURS: Final = SLOT_MINUTES / 60
 
